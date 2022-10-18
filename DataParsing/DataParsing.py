@@ -8,7 +8,7 @@ import time
 
 
 class GameState:
-    def get_distance(node1,node2):    
+    def get_distance(self,node1,node2):    
         # node1,node2 are the 2 xy coordinates 
         # node1=[x1,y1,<other features>],pos2=[x2,y2,<other features>]
         return ((node1[0]-node2[0])**2+(node1[1]-node2[1])**2)**0.5
@@ -50,26 +50,35 @@ class GameState:
             ))
         ),axis=1)
 
-        _ = torch.arange(self.node_features.shape[0])
+        _ = np.arange(self.node_features.shape[0])
 
         edge_index = torch.tensor(
-            [
-                _.repeat_interleave(self.node_features.shape[0]),
-                _.repeat(self.node_features.shape[0])
-            ]
+            np.array([
+                np.repeat(_,self.node_features.shape[0]),
+                np.tile(_,self.node_features.shape[0])
+            ])
         )  
         #   The indexing order is first considering all edges going from the first node to other nodes (self-included), which will have n edges created. Then indexing the edges from the second nodes to other nodes, which also have n edges. Noted that for each pair of nodes, we have 2 edges to represent the bi-/un-directed graph. 
 
         distance = torch.zeros(self.node_features.shape[0],self.node_features.shape[0])
+        same_team = torch.zeros(self.node_features.shape[0],self.node_features.shape[0])
 
         for i in range(self.node_features.shape[0]):
             for j in range(i+1,self.node_features.shape[0]):
                 distance[i,j] = self.get_distance(self.node_features[i],self.node_features[j])
+                same_team[i,j] = int(self.node_features[i,2]==self.node_features[j,2])*2-1
 
-        distance += distance.T
+        distance += torch.clone(distance.T)
+        same_team += torch.clone(same_team.T)
 
-        self.edge_attri = torch.tensor(distance.reshape(-1,1))
-        self.graph = Data(self.node_features,edge_index=edge_index)
+        edge_attri = torch.cat(
+            (
+                distance.reshape(-1,1),
+                same_team.reshape(-1,1)
+            )
+        ,axis=1)
+    
+        self.graph = Data(self.node_features,edge_index=edge_index,edge_attr=edge_attri)
 
 
 if __name__=='__main__':    #   Testing
@@ -78,8 +87,8 @@ if __name__=='__main__':    #   Testing
     # Match.to_pickle(r"C:\Users\brian\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\Main\DataParsing\Match_3788765.pkl")
     # Frame = sb.frames(match_id=3788765)
     # Frame.to_pickle(r"C:\Users\brian\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\Main\DataParsing\Frame_3788765.pkl")
-    Match = pd.read_pickle(r"C:\Users\brian\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\Main\DataParsing\Match_3788765.pkl")
-    Frame = pd.read_pickle(r"C:\Users\brian\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\Main\DataParsing\Frame_3788765.pkl")
+    Match = pd.read_pickle(r"C:\Users\scs20\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\Main\DataParsing\Match_3788765.pkl")
+    Frame = pd.read_pickle(r"C:\Users\scs20\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\Main\DataParsing\Frame_3788765.pkl")
 
     st = time.time()
 
@@ -104,5 +113,6 @@ if __name__=='__main__':    #   Testing
 
     print(g.metadata)
     print(g.node_features)
+    print(g.graph)
     # print(g.locations.shape)
     print(time.time()-st)
