@@ -5,42 +5,60 @@ import torch.nn.functional as F
 import torch_geometric.nn as pyg_nn
 
 class GATBlock(nn.Module):
-    def __init__(self, dim_in, dim_out, dim_h=0, num_layers=1, heads=1):
+    def __init__(self, dim_in, dim_h, dim_out, num_layers=1, heads=1):
         super().__init__()
         self.num_layers = num_layers
         self.convs = nn.ModuleList()
+        self.convs.append(nn.BatchNorm1d(dim_in))
         self.convs.append(pyg_nn.GATv2Conv(dim_in, dim_h, heads))
         for _ in range(self.num_layers-2):
-            if (dim_h == 0):
-                raise Exception("Missing dim_h in GATBlock.__init__()")
+            self.convs.append(nn.BatchNorm1d(dim_h*heads))
             self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_h, heads))
+        self.convs.append(nn.BatchNorm1d(dim_h*heads))
         self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_out, heads))
         
     def forward(self, data):
         x, edge_index = data.x, data.edge_index
         for i, m in enumerate(self.convs):
-            x = m(x, edge_index)
-            if i != self.num_layers-1:
+            if isinstance(m, pyg_nn.GATv2Conv):
+                x = m(x, edge_index)
+            elif isinstance(m, nn.BatchNorm1d):
+                x = m(x)
+            if i != len(self.convs) - 1:
                 x = F.leaky_relu(x, 0.1)
                 x = F.dropout(x, p=0.5)
-        return torch.sigmoid(x)
+        return torch.sigmoid(x), edge_index
+    
+
+class SumPool(nn.Module):
+    def __init__(self, in_features, hidden_size):
+        super().__init__()
+        self.linear1 = nn.Linear(in_features, hidden_size)
+        self.linear2 = nn.Linear(hidden_size, in_features)
+        
+    def forward(self, x):
+        x = self.linear1(x)
+        x = F.leaky_relu(x, 0.1)
+        x = torch.sum(x, dim=0)
+        x = self.linear2(x)
+        x = F.leaky_relu(x, 0.1)
+        return x
     
 
 class LSTMBlock(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes):
+    def __init__(self, in_features, hidden_size, num_classes, num_layers):
         super().__init__()
-        self.input_size = input_size
+        self.in_features = in_features
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.num_classes = num_classes
-        self.batch_norm = nn.BatchNorm1d(input_size)
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers)
+        # self.batch_norm = nn.BatchNorm1d(in_features)
+        self.lstm = nn.LSTM(in_features, hidden_size, num_layers)
         self.fc = nn.Linear(hidden_size, num_classes)
         
     def forward(self, x, hn, cn):
-        x = self.batch_norm(x)
+        # x = self.batch_norm(x)
         out, (hn, cn) = self.lstm(x, (hn, cn))
-        print(out.size())
         final_out = self.fc(out)
         return final_out, hn, cn
     
