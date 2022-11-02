@@ -13,15 +13,36 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def train(model, train_dataloader, loss_fn, optimizer):
     model.train()
     # TODO: single training loop
+    for batch_idx, (input, label) in train_dataloader:
+        input, label = input.to(device), label.to(device)
+        optimizer.zero_grad()
+        output, hn, cn = model(input, hn, cn)
+        hn, cn = hn.detach(), cn.detach()
+        loss = loss_fn(output, label)
+        loss.backward()
+        optimizer.step()
+    
+
+def eval(model, test_dataloader):
+    model.eval()
+    # TODO: calculate accuracy
+    accuracy = 0
+    hn, cn = model.init(device)
+    with torch.no_grad():
+        inputs, lebels = next(iter(test_dataloader))
+        inputs, lebels = inputs.to(device), lebels.to(device)
+        # for loop
+    return
 
 
 def main():
     model = SportsGNN().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
     # TODO: get dataloader
     
+    hn, cn = model.init(device)
     for epoch in range(epochs):
         train(model, train_dataloader, loss_fn, optimizer)
 
