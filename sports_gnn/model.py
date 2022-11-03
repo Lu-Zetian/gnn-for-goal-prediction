@@ -4,18 +4,21 @@ from sports_gnn.common import *
 class SportsGNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.gat = GATBlock(3, 16, 8, 2)
-        self.sum_pool = SumPool(8, 16)
-        self.lstm = LSTMBlock(8, 16, 2, 2)
+        self.gat_block = GATBlock(3, 16, 8, 3, 2)
+        self.sum_pool = SumPool(16, 64)
+        self.game_state_encoder = nn.Linear(16, 16)
+        self.res_mlp = ResMLP(16)
+        self.lstm_block = LSTMBlock(16, 16, 2, 2)
         self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, data, hn, cn):
-        x, _ = self.gat(data)
+    def forward(self, graph_data, game_state, hn, cn):
+        x, _ = self.gat_block(graph_data)
         x = self.sum_pool(x)
-        x = torch.unsqueeze(x, 0)
-        x, hn, cn = self.lstm(x, hn, cn)
+        x = self.game_state_encoder(x)
+        x = self.res_mlp(x)
+        x, hn, cn = self.lstm_block(x, hn, cn)
         x = self.softmax(x)
         return x, hn, cn
     
     def init(self, device=None):
-        return self.lstm.init(device)
+        return self.lstm_block.init(device)

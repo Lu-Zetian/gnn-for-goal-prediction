@@ -42,7 +42,23 @@ class SumPool(nn.Module):
         x = torch.sum(x, dim=0)
         x = self.linear2(x)
         x = F.leaky_relu(x, 0.1)
+        x = torch.unsqueeze(x, 0)
         return x
+    
+    
+class ResMLP(nn.Module):
+    def __init__(self, in_features):
+        super().__init__()
+        self.linear1 = nn.Linear(in_features, in_features)
+        self.linear2 = nn.Linear(in_features, in_features)
+        
+    def forward(self, x):
+        x1 = F.leaky_relu(x, 0.1)
+        x1 = self.linear1(x1)
+        x1 = F.leaky_relu(x, 0.1)
+        x1 = self.linear2(x1)
+        x1 = F.leaky_relu(x + x1, 0.1)
+        return x1
     
 
 class LSTMBlock(nn.Module):
