@@ -13,6 +13,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def train(model, train_dataloader, loss_fn, optimizer):
     model.train()
     # TODO: single training loop
+    hn, cn = model.init(device)
     for batch_idx, (input, label) in train_dataloader:
         input, label = input.to(device), label.to(device)
         optimizer.zero_grad()
@@ -42,7 +43,6 @@ def main():
     
     # TODO: get dataloader
     
-    hn, cn = model.init(device)
     for epoch in range(epochs):
         train(model, train_dataloader, loss_fn, optimizer)
 
