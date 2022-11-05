@@ -175,7 +175,7 @@ class GameState:
             # print(same_team)
 
             self.edge_attr = torch.cat([inverse_distance.reshape(-1,1),same_team.reshape(-1,1)],axis=1)
-            self.graph = Data(self.node_features,edge_index=edge_index,device=device)
+            self.graph = Data(self.node_features,edge_index=edge_index,edge_attr = self.edge_attr,device=device)
         except:
             print(f'Error\nevent id : {event_id}\nself.node_feature : {self.node_features}')
 def GameState_Test(device='cpu',event_id='04ba5d38-1d5a-4486-9f10-71ef08cc9351'):
