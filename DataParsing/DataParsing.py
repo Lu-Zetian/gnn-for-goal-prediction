@@ -18,25 +18,29 @@ class Match:
 
         # self.events = sb.events(match_id=match_id)
         self.events = event_df
-        self.events.sort_values(['period','timestamp'],inplace=True)
         
         # self.frames = sb.frames(match_id=match_id)
         self.frames = frame_df
         self.gamestates = []
-        self.result = (
+        self.result = [
             match_df.loc[match_df['match_id']==match_id,'home_score'].values[0],match_df.loc[match_df['match_id']==match_id,'away_score'].values[0]
-        )
+        ]
         # self.get_gamestates[1,self.events.shape[0]]()
             
         self.get_gamestates()
         
     
     def get_gamestates(self):
-        current_score = [0,0]
+        self.events.sort_values(['period','timestamp'],inplace=True)
+        home_score,away_score = self.result
         # print(self.events['id'])
         # for i in range(len(self.events['id'])):
-        for id in self.events['id']:
+        next_team = 0
+        reversed_id = list(reversed(list(self.events['id'])))
+        for id in reversed_id:
             # id = self.events.at[i,'id']
+            if self.events.loc[self.events['id']==id,'period'].values[0]>4:continue
+
             if self.events.loc[self.events['id']==id,'type'].values[0] in [
                 'Starting XI','Half Start','Duel'
                 ]:continue
@@ -44,22 +48,51 @@ class Match:
             #   +1 for goal
             
             if self.events.loc[self.events['id']==id,'shot_outcome'].values[0]=='Goal':
-                #   identify scroing team, 0 for home and 1 for away team.
                 scoring_team = self.events.loc[self.events['id']==id,'team'].values[0]
 
                 # print(scoring_team)
-                current_score[int(scoring_team==self.away_team)]+=1
+                if scoring_team==self.home_team:
+                    home_score-=1
+                    next_team = 1
+                if scoring_team==self.away_team:
+                    away_score-=1
+                    next_team = -1
+                # current_score[int(scoring_team==self.away_team)]-=1
+            current_score = [home_score,away_score]
                     
-            self.gamestates.append(GameState(id,self.events,self.frames,current_score=current_score))
+            self.gamestates.append(GameState(
+                event_id=id,
+                Events=self.events,
+                Frame=self.frames,
+                home_team=self.home_team,
+                away_team=self.away_team,
+                current_score=current_score,
+                next_team=next_team))
             # print(self.gamestates[-1].metadata['period'],self.gamestates[-1].metadata['timestamp'])
+        self.gamestates.reverse()
 
 def Match_Test():
     os.chdir(os.path.dirname(__file__))
     M_df = pd.read_pickle(r'Matches_EURO.pkl')
-    print('Macth columns\n',M_df.columns)
-    M = Match(3788765,M_df)
+    # print('Macth columns\n',M_df.columns)
+    e_df = pd.read_pickle(r'Events_3788765.pkl')
+    f_df = pd.read_pickle(r'Frames_3788765.pkl')
+    M = Match(3788765,M_df,event_df=e_df,frame_df=f_df)
+    M=[M]
     # M.get_gamestates()    
+    import pickle
+    with open('sample_data.pkl','wb') as f:
+        print('writing')
+        pickle.dump(M,f,protocol=pickle.HIGHEST_PROTOCOL)
+        print('written')
+        
+    # for g in M.gamestates:
+    #     print(g.label)
+    #     print(g.metadata)
     # print(M.gamestates)
+    # print(M.gamestates[0].label)
+    # print(M.gamestates[0].metadata['current_score'])
+    
 
 class GameState:
     def get_inverse_distance(self,x1,y1,x2,y2):    
@@ -70,22 +103,25 @@ class GameState:
             x=x
         return x
 
-    def __init__(self,event_id,Events,Frame,current_score=(0,0),device='cpu'):
+    def __init__(self,event_id,Events,Frame,home_team,away_team,next_team=0,current_score=[0,0],device='cpu'):
+        self.label = next_team  #   1 for home team, 0 for no next goal, -1 for away team 
         self.metadata = Events.loc[
             Events['id']==event_id,
             ['id','period','timestamp']
             ].to_dict('records')[0]
         try:
-            self.metadata['visible_area'] = Frame.loc[Frame['id']==event_id,'visible_area'].to_list()[0]
+            self.metadata.update({'visible_area':Frame.loc[Frame['id']==event_id,'visible_area'].to_list()[0]})
         except:
             # print(Frame.loc[Frame['id']==event_id,'visible_area'])
             # print(f'Event ID:{event_id:50s}\tNo visible area')
             return None
-        self.metadata['actor_team']= int(Events.loc[Events['id']==event_id,'team']==Events.loc[Events['id']==event_id,'possession_team'])
+        self.metadata.update({'actor_team':int(Events.loc[Events['id']==event_id,'team']==home_team)*2-1})  #1 for home team, -1 for away team.
+
+        self.metadata.update({'actor_team_doing':int(Events.loc[Events['id']==event_id,'team']==Events.loc[Events['id']==event_id,'possession_team'])})
         #1 for attacking
         #0 for defensing
 
-        self.metadata['current_score'] = current_score
+        self.metadata.update({'current_score':current_score})
 
         #   self.metadata is a dictionary storing different metadata/global data:
         #   'id': event id, used as the key matching the frames
@@ -198,6 +234,12 @@ def read_events(**kwargs):
 if __name__=='__main__':    #   Testing
     # GameState_Test(event_id='04ba5d38-1d5a-4486-9f10-71ef08cc9351')
     Match_Test()
+    # df = pd.read_pickle(r'C:\Users\scs20\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\comp4222-project\DataParsing\Events_3788765.pkl')
+    # df.sort_values(['period','timestamp'],inplace=True)
+    # for id in df['id']:
+    #     p=df.loc[df['id']==id,'period'].values[0]
+    #     t=df.loc[df['id']==id,'timestamp'].values[0]
+    #     print(f'{"Period:":10s}{p}\t{"Timestamp:":20s}{t}')
     # read_events()
     # read_events(event_id='84703116-40f7-4ef0-aca2-f60769395800')
     # st =time.time()
