@@ -38,6 +38,7 @@ def parsing():
 import pickle,time
 st = time.time()
 # objects = []
+os.chdir(os.path.dirname(os.path.abspath(__name__)))
 with (open('data_2.pickle','rb')) as openfile:  # read the parsed data
     print('reading')
     while True:
@@ -45,6 +46,7 @@ with (open('data_2.pickle','rb')) as openfile:  # read the parsed data
             data=pickle.load(openfile)
         except EOFError:
             break
+    print('loaded')
 et = time.time()
 print(et-st) #loading time
 
@@ -52,4 +54,9 @@ print('match:\t',data[0].match_id)
 print('Label:\t',data[0].gamestates[0].label)
 print('Graph:\t',data[0].gamestates[0].graph)
 print('Meta: \t',data[0].gamestates[0].metadata)        
+
+print('match:\t',data[1].match_id)
+print('Label:\t',data[1].gamestates[10].label)
+print('Graph:\t',data[1].gamestates[10].graph)
+print('Meta: \t',data[1].gamestates[10].metadata)        
     
