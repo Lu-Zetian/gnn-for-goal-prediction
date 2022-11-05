@@ -155,7 +155,7 @@ class GameState:
 
         _ = torch.arange(self.node_features.shape[0],device=device)
 
-        edge_index = torch.cat([
+        edge_index = torch.stack([
                 torch.repeat_interleave(_,self.node_features.shape[0]),
                 _.repeat(self.node_features.shape[0])
             ])
