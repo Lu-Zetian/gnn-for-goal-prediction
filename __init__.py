@@ -10,7 +10,7 @@ pd.set_option('display.width', None)
 # heads=100
 
 DataLocation = os.path.dirname(os.path.abspath(__file__))
-# print(DataLocation)
+print(DataLocation)
 from DataParsing import DataParsing 
 from DataParsing.DataParsing import Match,GameState
 
@@ -55,7 +55,8 @@ et = time.time()
 print('Reading time:\t',et-st) #loading time
 
 print('-'*60)
-print('match:\t',data[0].match_id)
+# print('match:\t',data[0].match_id)
+print(len(data))
 print('-'*60)
 
 print('Label:\t',data[0].gamestates[0].label)
@@ -75,4 +76,7 @@ print('Meta: \t',data[0].gamestates[1].metadata)
 # print('Label:\t',data[1].gamestates[10].label)
 # print('Graph:\t',data[1].gamestates[10].graph)
 # print('Meta: \t',data[1].gamestates[10].metadata)        
+
+print('-'*60)
+print(data[0].gamestates[21].graph)
     
