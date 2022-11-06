@@ -149,7 +149,7 @@ class GameState:
             self.locations,
             torch.cat((
                 torch.ones(self.actor.shape[0]+self.teammates.shape[0],1,device=device)*self.metadata['actor_team'],
-                torch.ones(self.enemy.shape[0],1,device=device)*(1-self.metadata['actor_team'])
+                torch.ones(self.enemy.shape[0],1,device=device)*(-self.metadata['actor_team'])
             ))
         ),axis=1)
 
@@ -177,7 +177,8 @@ class GameState:
             self.edge_attr = torch.cat([inverse_distance.reshape(-1,1),same_team.reshape(-1,1)],axis=1)
             self.graph = Data(self.node_features,edge_index=edge_index,edge_attr = self.edge_attr,device=device)
         except:
-            print(f'Error\nevent id : {event_id}\nself.node_feature : {self.node_features}')
+            print(f'Error\tevent id : {event_id}')
+            pass
 def GameState_Test(device='cpu',event_id='04ba5d38-1d5a-4486-9f10-71ef08cc9351'):
     heads=20
     # Events = sb.events(match_id=3788765).sort_values(['possession','timestamp'])
@@ -233,7 +234,7 @@ def read_events(**kwargs):
 
 if __name__=='__main__':    #   Testing
     # GameState_Test(event_id='04ba5d38-1d5a-4486-9f10-71ef08cc9351')
-    Match_Test()
+    # Match_Test()
     # df = pd.read_pickle(r'C:\Users\scs20\OneDrive - HKUST Connect\2022-23_Fall\COMP4222\Project\comp4222-project\DataParsing\Events_3788765.pkl')
     # df.sort_values(['period','timestamp'],inplace=True)
     # for id in df['id']:
@@ -241,7 +242,7 @@ if __name__=='__main__':    #   Testing
     #     t=df.loc[df['id']==id,'timestamp'].values[0]
     #     print(f'{"Period:":10s}{p}\t{"Timestamp:":20s}{t}')
     # read_events()
-    # read_events(event_id='84703116-40f7-4ef0-aca2-f60769395800')
+    read_events(event_id = '2d2508b7-e9b6-4cfc-9c8b-2f6df4bacaaa')
     # st =time.time()
     # GameState_Test(device='cuda:0')
     # print('cuda:0',time.time()-st)
