@@ -10,14 +10,16 @@ learning_rate = 1e-4
 epochs = 1
 batch_size = 32
 weight_decay = 1e-5
-model_path = ""
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DataLocation = os.path.dirname(os.path.abspath(__file__))
+load_model = False
+model_dir = "weights"
+model_filename = "model.pth"
+root = os.path.dirname(os.path.abspath(__file__))
 
 
 def load_data(filename):
     st = time.time()
-    sample = os.path.join(DataLocation, filename)
+    sample = os.path.join(root, filename)
     with (open(sample,'rb')) as openfile:  # read the parsed data
         print('reading')
         while True:
@@ -91,7 +93,14 @@ def eval(model, test_dataloader):
 
 
 def main():
-    model = SportsGNN().to(device)
+    if not os.path.isdir(os.path.join(root, model_dir)):
+        os.mkdir(os.path.join(root, model_dir))
+    
+    if load_model:
+        model = torch.load(os.path.join(root, model_dir, model_filename))
+    else:
+        model = SportsGNN().to(device)
+        
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
@@ -99,6 +108,8 @@ def main():
     
     for epoch in range(epochs):
         train(model, data, loss_fn, optimizer)
+        
+    # torch.save(model, os.path.join(root, model_dir, model_filename))
 
 
 if __name__ == "__main__":
