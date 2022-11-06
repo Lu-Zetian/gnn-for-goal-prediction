@@ -56,7 +56,7 @@ class ResLinear(nn.Module):
         return x1
     
     
-class GameStateEncoder(nn.Module):
+class MetaDataEncoder(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
         self.fc = nn.Linear(in_features, out_features)
