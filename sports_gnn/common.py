@@ -44,22 +44,31 @@ class SumPool(nn.Module):
         return x
     
     
-class ResMLP(nn.Module):
+class ResLinear(nn.Module):
     def __init__(self, in_features):
         super().__init__()
-        self.linear1 = nn.Linear(in_features, in_features)
-        self.linear2 = nn.Linear(in_features, in_features)
+        self.linear = nn.Linear(in_features, in_features)
         
     def forward(self, x):
-        x1 = F.leaky_relu(x, 0.1)
-        x1 = F.dropout(x1, p=0.5)
-        x1 = self.linear1(x1)
-        x1 = F.leaky_relu(x, 0.1)
-        x = F.dropout(x, p=0.5)
-        x1 = self.linear2(x1)
+        x1 = F.dropout(x, p=0.5)
+        x1 = self.linear(x1)
         x1 = F.leaky_relu(x + x1, 0.1)
-        x = F.dropout(x, p=0.5)
         return x1
+    
+    
+class GameStateEncoder(nn.Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.fc = nn.Linear(in_features, out_features)
+        self.res_fc1 = ResLinear(out_features)
+        self.res_fc2 = ResLinear(out_features)
+        
+    def forward(self, x):
+        x = self.fc(x)
+        x = F.leaky_relu(x, 0.1)
+        x = self.res_fc1(x)
+        x = self.res_fc2(x)
+        return x
     
 
 class LSTMBlock(nn.Module):
