@@ -9,7 +9,7 @@ class SportsGNN(nn.Module):
         self.sum_pool = SumPool(in_features=24, hidden_size=64)
         self.meta_data_encoder = MetaDataEncoder(in_features=4, out_features=8)
         self.fc = nn.Linear(in_features=32, out_features=16)
-        self.lstm_block = LSTMBlock(in_features=16, hidden_size=16, num_classes=2, num_layers=2)
+        self.lstm_block = LSTMBlock(in_features=16, hidden_size=16, num_classes=3, num_layers=2)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, graph_data, meta_data, hn, cn):

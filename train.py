@@ -32,10 +32,18 @@ def load_data(filename):
 
 
 def label_converter(label):
-    return label
+    onehot_label = torch.zeros(3, dtype=torch.float32)
+    if label == 1:
+        onehot_label[0] = 1
+    elif label == 0:
+        onehot_label[1] = 1
+    elif label == -1:
+        onehot_label[2] = 1
+    return onehot_label
 
 
 def meta_data_converter(meta_data):
+    print(meta_data)
     return meta_data
 
 
@@ -53,7 +61,7 @@ def train(model, data, loss_fn, optimizer):
             label = label_converter(label)
             meta_data = meta_data_converter(meta_data)
             # graph_data, meta_data, label = graph_data.to(device), meta_data.to(device), label.to(device)
-            print(graph_data, meta_data, label, sep="\n")
+            # print(graph_data, meta_data, label, sep="\n")
             # print(graph_data.x)
             # print(label, end=" ")
             # print(j)
