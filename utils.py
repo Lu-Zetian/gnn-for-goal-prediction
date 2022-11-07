@@ -34,12 +34,13 @@ def label_converter(label):
 
 
 def meta_data_converter(meta_data):
-    meta_data_vector = torch.zeros(6)
+    meta_data_vector = torch.zeros(6, dtype=torch.float32)
     meta_data_vector[0] = meta_data["period"]
-    print(type(meta_data["timestamp"]))
+    timestamp = meta_data["timestamp"].split(":")
+    timestamp = [float(x) for x in timestamp]
+    meta_data_vector[1] = (timestamp[0]*60*60 + timestamp[1]*60 + timestamp[2]) / (45*60)
     meta_data_vector[2] = meta_data["actor_team"]
     meta_data_vector[3] = meta_data["actor_team_doing"]
     meta_data_vector[4] = meta_data["current_score"][0]
     meta_data_vector[5] = meta_data["current_score"][1]
-    # print(meta_data_vector)
     return meta_data_vector
