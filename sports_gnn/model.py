@@ -7,7 +7,7 @@ class SportsGNN(nn.Module):
         super().__init__()
         self.gat_block = GATBlock(dim_in=3, dim_h=16, dim_out=8, edge_dim=2, num_layers=3, heads=3)
         self.sum_pool = SumPool(in_features=24, hidden_size=64)
-        self.meta_data_encoder = MetaDataEncoder(in_features=4, out_features=8)
+        self.meta_data_encoder = MetaDataEncoder(in_features=6, out_features=8)
         self.fc = nn.Linear(in_features=32, out_features=16)
         self.lstm_block = LSTMBlock(in_features=16, hidden_size=16, num_classes=3, num_layers=2)
         self.softmax = nn.Softmax(dim=1)
