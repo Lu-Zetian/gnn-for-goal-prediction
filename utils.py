@@ -53,3 +53,19 @@ def meta_data_to_vector(meta_data):
     meta_data_vector[4] = meta_data["current_score"][0]
     meta_data_vector[5] = meta_data["current_score"][1]
     return meta_data_vector
+
+
+def get_location_data(data, match_index):
+    location_data = []
+    match = data[match_index]
+    for timestamp in match.gamestates:
+        try:
+            location_tensor = torch.zeros(2, 2, timestamp.graph.x.size(dim=0))
+        except:
+            continue
+        
+        location_data.append(location_tensor)
+    return location_data
+    
+
+get_location_data(load_data("sample_data.pkl"), 0)
