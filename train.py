@@ -12,6 +12,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 load_model = False
 model_dir = "weights"
 model_filename = "model.pth"
+data_filename = "data_finalized.pickle"
 root = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -34,7 +35,7 @@ def train(model, data, loss_fn, optimizer):
             loss = loss_fn(output, label)
             loss.backward()
             optimizer.step()
-            print(f"training: {j}/{len(data[i].gamestates)}", end="\r")
+            print(f"training: {j}/{len(data[i].gamestates)}, match: {i}", end="\r")
     
 
 def eval(model, data):
@@ -62,7 +63,7 @@ def eval(model, data):
                 num_pred += 1
                 if output == label:
                     num_correct += 1
-                print(f"evaluating: {j}/{len(data[i].gamestates)}", end="\r")
+                print(f"evaluating: {j}/{len(data[i].gamestates)}, match: {i}", end="\r")
     accuracy = (float)(num_correct)/num_pred
     return accuracy
 
@@ -79,14 +80,14 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     
-    data = load_data("sample_data.pkl")
+    data = load_data(data_filename)
     
     for epoch in range(epochs):
         train(model, data, loss_fn, optimizer)
         accuracy = eval(model, data)
         print(f"epoch: {epoch+1}, accuracy: {accuracy}")
         
-    # torch.save(model, os.path.join(root, model_dir, model_filename))
+    torch.save(model, os.path.join(root, model_dir, model_filename))
 
 
 if __name__ == "__main__":
