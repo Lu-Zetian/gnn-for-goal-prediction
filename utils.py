@@ -60,12 +60,12 @@ def get_location_data(data, match_index):
     match = data[match_index]
     for timestamp in match.gamestates:
         try:
-            location_tensor = torch.zeros(2, 2, timestamp.graph.x.size(dim=0))
+            location_tensor = timestamp.graph.x.T
         except:
             continue
-        
-        location_data.append(location_tensor)
+        location_tensor, team_tensor = location_tensor[:2], location_tensor[2]
+        home = (location_tensor.T)[team_tensor == 1].T
+        away = (location_tensor.T)[team_tensor == -1].T
+        location_data.append((home, away))
     return location_data
     
-
-get_location_data(load_data("sample_data.pkl"), 0)
