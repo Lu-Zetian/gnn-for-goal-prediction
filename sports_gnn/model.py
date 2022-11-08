@@ -5,11 +5,11 @@ from sports_gnn.common import *
 class SportsGNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.gat_block = GATBlock(dim_in=3, dim_h=16, dim_out=8, edge_dim=2, num_layers=3, heads=3)
-        self.sum_pool = SumPool(in_features=24, hidden_size=64)
-        self.meta_data_encoder = MetaDataEncoder(in_features=6, out_features=8)
-        self.fc = nn.Linear(in_features=32, out_features=16)
-        self.lstm_block = LSTMBlock(in_features=16, hidden_size=16, num_classes=3, num_layers=2)
+        self.gat_block = GATBlock(dim_in=3, dim_h=8, dim_out=4, edge_dim=2, num_layers=2, heads=3)
+        self.sum_pool = SumPool(in_features=12, hidden_size=24)
+        self.meta_data_encoder = MetaDataEncoder(in_features=6, out_features=4)
+        self.res_fc = ResLinear(in_features=16)
+        self.lstm_block = LSTMBlock(in_features=16, hidden_size=16, num_classes=3, num_layers=1)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, graph_data, meta_data, hn, cn):
@@ -20,8 +20,7 @@ class SportsGNN(nn.Module):
         
         x = torch.cat((x, meta_data), dim=0)
         
-        x = self.fc(x)
-        x = F.leaky_relu(x, 0.1)
+        x = self.res_fc(x)
         
         x = torch.unsqueeze(x, 0)
         x, hn, cn = self.lstm_block(x, hn, cn)

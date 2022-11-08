@@ -9,12 +9,12 @@ class GATBlock(nn.Module):
         self.num_layers = num_layers
         self.convs = nn.ModuleList()
         self.convs.append(nn.BatchNorm1d(dim_in))
-        self.convs.append(pyg_nn.GATv2Conv(dim_in, dim_h, heads, edge_dim=edge_dim))
+        self.convs.append(pyg_nn.GATv2Conv(dim_in, dim_h, heads, dropout=0.5, edge_dim=edge_dim))
         for _ in range(self.num_layers-2):
             self.convs.append(nn.BatchNorm1d(dim_h*heads))
-            self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_h, heads, edge_dim=edge_dim))
+            self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_h, heads, dropout=0.5, edge_dim=edge_dim))
         self.convs.append(nn.BatchNorm1d(dim_h*heads))
-        self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_out, heads, edge_dim=edge_dim))
+        self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_out, heads, dropout=0.5, edge_dim=edge_dim))
         
     def forward(self, data):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
@@ -60,14 +60,12 @@ class MetaDataEncoder(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
         self.fc = nn.Linear(in_features, out_features)
-        self.res_fc1 = ResLinear(out_features)
-        self.res_fc2 = ResLinear(out_features)
+        self.res_fc = ResLinear(out_features)
         
     def forward(self, x):
         x = self.fc(x)
         x = F.leaky_relu(x, 0.1)
-        x = self.res_fc1(x)
-        x = self.res_fc2(x)
+        x = self.res_fc(x)
         return x
     
 
@@ -85,6 +83,7 @@ class LSTMBlock(nn.Module):
     def forward(self, x, hn, cn):
         # x = self.batch_norm(x)
         out, (hn, cn) = self.lstm(x, (hn, cn))
+        out = F.dropout(out, p=0.5)
         final_out = self.fc(out)
         return final_out, hn, cn
     
