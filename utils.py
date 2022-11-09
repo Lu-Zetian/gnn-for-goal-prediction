@@ -2,6 +2,8 @@ import os
 import pickle, time
 import torch
 from DataParsing.DataParsing import Match, GameState
+from itertools import chain
+import random
 
 root = os.path.dirname(os.path.abspath(__file__))
 
@@ -53,6 +55,15 @@ def meta_data_to_vector(meta_data):
     meta_data_vector[4] = meta_data["current_score"][0]
     meta_data_vector[5] = meta_data["current_score"][1]
     return meta_data_vector
+
+
+def shuffle_data(data):
+    shuffled_data = []
+    for match in data:
+        shuffled_data.append(match.gamestates)
+    shuffled_data = list(chain.from_iterable(shuffled_data))
+    random.shuffle(shuffled_data)
+    return shuffled_data
 
 
 def get_location_data(data, match_index):
