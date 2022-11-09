@@ -56,6 +56,18 @@ class ResLinear(nn.Module):
         return x1
     
     
+class Linear(nn.Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.linear = nn.Linear(in_features, out_features)
+        
+    def forward(self, x):
+        x = F.dropout(x, p=0.5)
+        x = self.linear(x)
+        x = F.leaky_relu(x, 0.1)
+        return x
+    
+    
 class MetaDataEncoder(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
