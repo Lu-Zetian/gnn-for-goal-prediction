@@ -3,15 +3,17 @@ import torch
 import torch.nn as nn
 from sports_gnn.model import SportsGNN
 from utils import *
+import random
 
 # Hyper parameters
 learning_rate = 1e-4
-epochs = 5
+epochs = 1
 weight_decay = 1e-5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-load_model = False
+load_model = True
 model_dir = "weights"
 model_filename = "model.pth"
+# data_filename = "sample_data.pkl"
 data_filename = "data_finalized.pickle"
 root = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,50 +22,53 @@ def train(model, data, loss_fn, optimizer):
     model.train()
     for i in range(len(data)):
         hn, cn = model.init(device)
-        for j in range(len(data[i].gamestates)):
-            gamestate = data[i].gamestates[j]
+        gamestates_copy = data[i].gamestates.copy()
+        for j in range(len(gamestates_copy)):
             try:
+                gamestate = gamestates_copy[j]
                 graph_data, meta_data, label = gamestate.graph, gamestate.metadata, gamestate.label
+                label = label_to_onehot(label)
+                meta_data = meta_data_to_vector(meta_data)
+                graph_data, meta_data, label = graph_data.to(device), meta_data.to(device), label.to(device)
+                optimizer.zero_grad()
+                output, hn, cn = model(graph_data, meta_data, hn, cn)
+                hn, cn = hn.detach(), cn.detach()
+                loss = loss_fn(output, label)
+                loss.backward()
+                optimizer.step()
+                print(f"Training, match: {i}, timestamp: {j}/{len(data[i].gamestates)}", end="\r")
             except:
-                continue
-            label = label_to_onehot(label)
-            meta_data = meta_data_to_vector(meta_data)
-            graph_data, meta_data, label = graph_data.to(device), meta_data.to(device), label.to(device)
-            optimizer.zero_grad()
-            output, hn, cn = model(graph_data, meta_data, hn, cn)
-            hn, cn = hn.detach(), cn.detach()
-            loss = loss_fn(output, label)
-            loss.backward()
-            optimizer.step()
-            print(f"training: {j}/{len(data[i].gamestates)}, match: {i}", end="\r")
+                    print(f"Train Error at match: {i}, timestamp: {j}")
+                    data[i].gamestates.remove(gamestates_copy[j])
+                    continue
     
 
 def eval(model, data):
     model.eval()
-    accuracy = 0
     num_pred = 0
     num_correct = 0
+    i = random.randrange(len(data))
     with torch.no_grad():
-        for i in range(len(data)):
-            hn, cn = model.init(device)
-            for j in range(len(data[i].gamestates)):
+        hn, cn = model.init(device)
+        for j in range(len(data[i].gamestates)):
+            try:
                 gamestate = data[i].gamestates[j]
-                try:
-                    graph_data, meta_data, label = gamestate.graph, gamestate.metadata, gamestate.label
-                except:
-                    continue
+                graph_data, meta_data, label = gamestate.graph, gamestate.metadata, gamestate.label
                 label = label_to_index(label)
                 meta_data = meta_data_to_vector(meta_data)
                 graph_data, meta_data = graph_data.to(device), meta_data.to(device)
                 output, hn, cn = model(graph_data, meta_data, hn, cn)
-                if j == 0:
+                if j == 100:
                     print(output)
                 hn, cn = hn.detach(), cn.detach()
                 output = torch.argmax(output)
                 num_pred += 1
                 if output == label:
                     num_correct += 1
-                print(f"evaluating: {j}/{len(data[i].gamestates)}, match: {i}", end="\r")
+                print(f"Evaluating,  match: {i}, timestamp: {j}/{len(data[i].gamestates)},", end="\r")
+            except:
+                print(f"Evaluate Error at match: {i}, timestamp: {j}")
+                continue
     accuracy = (float)(num_correct)/num_pred
     return accuracy
 
