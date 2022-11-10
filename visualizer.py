@@ -88,7 +88,7 @@ class WinRateVHelper(VisualizationHelper):
             raise ArithmeticError
         fdata : List[float] = []
         fdata.append(0.0)
-        for i in range(start + 1, end):
+        for i in range(0, end - start):
             fdata.append(self.own_calculate(data[i], data[i - 1]))
         return fdata
          
