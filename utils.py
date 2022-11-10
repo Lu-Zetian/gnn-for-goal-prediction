@@ -57,13 +57,12 @@ def meta_data_to_vector(meta_data):
     return meta_data_vector
 
 
-def shuffle_data(data):
-    shuffled_data = []
+def flatten_data(data):
+    flat_data = []
     for match in data:
-        shuffled_data.append(match.gamestates)
-    shuffled_data = list(chain.from_iterable(shuffled_data))
-    random.shuffle(shuffled_data)
-    return shuffled_data
+        flat_data.append(match.gamestates)
+    flat_data = list(chain.from_iterable(flat_data))
+    return flat_data
 
 
 def get_location_data(data, match_index):
