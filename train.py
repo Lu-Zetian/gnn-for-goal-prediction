@@ -7,7 +7,7 @@ import random
 
 # Hyper parameters
 learning_rate = 1e-4
-epochs = 5
+epochs = 10
 weight_decay = 1e-5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 num_eval_match = 3
