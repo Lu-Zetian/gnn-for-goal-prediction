@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch_geometric.nn as pyg_nn
 
 class GATBlock(nn.Module):
-    def __init__(self, dim_in, dim_h, dim_out, edge_dim, num_layers=1, heads=1):
+    def __init__(self, dim_in, dim_h, dim_out, edge_dim, num_layers=2, heads=1):
         super().__init__()
         self.num_layers = num_layers
         self.convs = nn.ModuleList()
@@ -28,6 +28,34 @@ class GATBlock(nn.Module):
                 x = F.dropout(x, p=0.5)
         return F.leaky_relu(x, 0.1), edge_index
     
+
+class GConvBlock(nn.Module):
+    def __init__(self, dim_in, dim_h, dim_out, num_layers=2):
+        super().__init__()
+        self.num_layers = num_layers
+        self.convs = nn.ModuleList()
+        self.convs.append(nn.BatchNorm1d(dim_in))
+        self.convs.append(pyg_nn.GCNConv(dim_in, dim_h))
+        for _ in range(self.num_layers-2):
+            self.convs.append(nn.BatchNorm1d(dim_h))
+            self.convs.append(pyg_nn.GCNConv(dim_h, dim_h))
+        self.convs.append(nn.BatchNorm1d(dim_h))
+        self.convs.append(pyg_nn.GCNConv(dim_h, dim_out))
+        
+    def forward(self, data):
+        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
+        edge_weight = torch.sqrt(torch.sum(torch.square(edge_attr), dim=1))
+        for i, m in enumerate(self.convs):
+            if isinstance(m, pyg_nn.GCNConv):
+                x = m(x, edge_index, edge_weight)
+                print(x)
+            elif isinstance(m, nn.BatchNorm1d):
+                x = m(x)
+            if i != len(self.convs) - 1:
+                x = F.leaky_relu(x, 0.1)
+                x = F.dropout(x, p=0.5)
+        return F.leaky_relu(x, 0.1), edge_index    
+
 
 class SumPool(nn.Module):
     def __init__(self, in_features, hidden_size):
