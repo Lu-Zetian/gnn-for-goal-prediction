@@ -10,13 +10,12 @@ learning_rate = 1e-4
 epochs = 10
 weight_decay = 1e-5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-num_eval_match = 3
-num_eval_data = 3000
+num_eval_match = 5
+num_eval_data = 5000
 load_model = False
 model_dir = "weights"
 model_filename = "gat-3layer.pth"
 result_dir = "results"
-# data_filename = "sample_data.pkl"
 data_filename = "data_finalized.pickle"
 root = os.path.dirname(os.path.abspath(__file__))
 
@@ -84,13 +83,11 @@ def main():
     
     data = load_data(data_filename)
     
-    test_data = []
-    for _ in range(num_eval_match):
-        index = random.randrange(len(data))
-        test_data.append((data.pop(index)).gamestates)
-    test_data = list(chain.from_iterable(test_data))
+    train_data = data[:-num_eval_match]
+    test_data = data[-num_eval_match:]
     
-    train_data = flatten_data(data)
+    train_data = flatten_data(train_data)
+    test_data = flatten_data(test_data)
     
     for epoch in range(epochs):
         random.shuffle(train_data)

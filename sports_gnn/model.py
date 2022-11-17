@@ -7,7 +7,7 @@ class SportsGNN(nn.Module):
         super().__init__()
         self.conv_block = GATBlock(dim_in=3, dim_h=8, dim_out=8, edge_dim=2, num_layers=3, heads=3)
         # self.conv_block = GConvBlock(dim_in=3, dim_h=24, dim_out=24, num_layers=2)
-        self.sum_pool = SumPool(in_features=24, hidden_size=32)
+        self.sum_pool = SumPool(in_features=24, hidden_size=48)
         self.meta_data_encoder = MetaDataEncoder(in_features=6, out_features=8)
         self.res_fc1 = ResLinear(in_features=32)
         self.res_fc2 = ResLinear(in_features=32)
