@@ -1,7 +1,6 @@
-from torch import Tensor
 import numpy as np
 from enum import Enum
-from typing import Final, List
+from typing import Final, List, Tuple
 import matplotlib.pyplot as plt
 from abc import abstractmethod
 from utils import *
@@ -14,6 +13,60 @@ class GROUP(Enum):
 
     def __str__(self) -> str:
         return self.name
+
+class ActualWinRate(object):
+
+    def __init__(self, labels):
+        print(len(labels))
+        self.data = self.convert_labels(labels)
+        self.time = len(labels)
+
+    def convert_labels(self, labels : List[int]) -> Tuple[List[float], List[float], List[float]]:
+        ans : List[List[float]] = []
+        home : List[float] = []
+        draw : List[float] = []
+        away : List[float] = []
+        for i in range(len(labels)):
+            x = label_to_index(labels[i])
+            if x == 0:
+                home.append(1.0)
+                draw.append(0.0)
+                away.append(0.0)
+            elif x == 1:
+                home.append(0.0)
+                draw.append(1.0)
+                away.append(0.0)
+            else:
+                home.append(0.0)
+                draw.append(0.0)
+                away.append(1.0)
+        return (home, draw, away)
+
+    def visualize_tensor_range_label(self) -> None:
+        data_g = self.data
+        plt.figure(1, figsize=(12, 6))
+        plt.xticks(list(range(0, self.time + 200, 200)))
+        plt.yticks(list(np.arange(0.0, 1.1, 1.0)))
+        plt.plot(data_g[0], label='Home')
+        plt.plot(data_g[1], label='Draw')
+        plt.plot(data_g[2], label='Away')
+        plt.grid(True)
+        plt.legend()
+        plt.show()
+
+    def visualize_by_range(self, begin, end) -> None:
+        data0 = self.data[0][begin:end]
+        data1 = self.data[1][begin:end]
+        data2 = self.data[2][begin:end]
+        plt.figure(1, figsize=(12, 6))
+        plt.xticks(list(range(begin, end + 200, 200)))
+        plt.yticks(list(np.arange(0.0, 1.1, 1.0)))
+        plt.plot(data0, label='Home')
+        plt.plot(data1, label='Draw')
+        plt.plot(data2, label='Away')
+        plt.grid(True)
+        plt.legend()
+        plt.show()
 
 
 
@@ -115,11 +168,12 @@ class WinRateVHelper(VisualizationHelper):
             end = min(start + 399, self.tensor.size()[0] - 1)
         data_g = self.convert_tensor(self.tensor, start, end + 1)
         plt.figure(1, figsize=(self.plot_width(), self.plot_height()))
-        plt.xticks(list(range(start, end + 10, 50)))
+        plt.xticks(list(range(0, end - start + 10, 50)))
         plt.yticks(list(np.arange(0.0, 1.2, 0.1)))
         plt.plot(data_g[0], label='Home')
         plt.plot(data_g[1], label='Draw')
         plt.plot(data_g[2], label='Away')
+        #plt.xticks(list(range(start, end + 10, 50)))
         plt.grid(True)
         plt.legend()
         plt.show()
