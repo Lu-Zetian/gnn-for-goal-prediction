@@ -40,10 +40,6 @@ class VisualizationHelper:
     def tensor(self):
         return self._tensor
     
-    @property
-    def time(self) -> int:
-        return self._time
-    
     
 class WinRateVHelper(VisualizationHelper):
     
@@ -146,6 +142,10 @@ class WinRateVHelper(VisualizationHelper):
         plt.grid(True)
         plt.legend()
         plt.show()
+
+    @property
+    def time(self) -> int:
+        return self._time
         
         
 class PlayerPositionVHelper(VisualizationHelper):
@@ -184,6 +184,10 @@ class PlayerPositionVHelper(VisualizationHelper):
             plt.scatter(groupBp[0], groupBp[1], c = "blue", s = 60, alpha=0.4)
         plt.scatter(groupA[0], groupA[1], c ="red", s = 60)
         plt.scatter(groupB[0], groupB[1], c ="blue", s = 60)
+
+    @property
+    def time(self) -> int:
+        return self._time
     
     @property
     def width(self) -> int:
