@@ -7,14 +7,14 @@ import random
 
 # Hyper parameters
 learning_rate = 1e-4
-epochs = 10
+epochs = 15
 weight_decay = 1e-5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-num_eval_match = 5
+num_eval_match = 10
 num_eval_data = 5000
 load_model = False
 model_dir = "weights"
-model_filename = "gat-3layer.pth"
+model_filename = "gcn-2layer.pth"
 result_dir = "results"
 data_filename = "data_finalized.pickle"
 root = os.path.dirname(os.path.abspath(__file__))
@@ -92,8 +92,9 @@ def main():
     for epoch in range(epochs):
         random.shuffle(train_data)
         train_data = train(model, train_data, loss_fn, optimizer)
-        accuracy = eval(model, test_data)
-        print(f"Finished epoch: {epoch+1}, accuracy: {accuracy}")
+        test_accuracy = eval(model, test_data)
+        train_accuracy = eval(model, train_data)
+        print(f"Finished epoch: {epoch+1}, test accuracy: {test_accuracy}, train accuracy: {train_accuracy}")
         torch.save(model, os.path.join(root, model_dir, model_filename))
 
 
