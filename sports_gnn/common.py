@@ -9,6 +9,31 @@ class GATBlock(nn.Module):
         self.num_layers = num_layers
         self.convs = nn.ModuleList()
         self.convs.append(nn.BatchNorm1d(dim_in))
+        self.convs.append(pyg_nn.GATConv(dim_in, dim_h, heads, dropout=0.5, edge_dim=edge_dim))
+        for _ in range(self.num_layers-2):
+            self.convs.append(nn.BatchNorm1d(dim_h*heads))
+            self.convs.append(pyg_nn.GATConv(dim_h*heads, dim_h, heads, dropout=0.5, edge_dim=edge_dim))
+        self.convs.append(nn.BatchNorm1d(dim_h*heads))
+        self.convs.append(pyg_nn.GATConv(dim_h*heads, dim_out, heads, dropout=0.5, edge_dim=edge_dim))
+        
+    def forward(self, data):
+        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
+        for i, m in enumerate(self.convs):
+            if isinstance(m, (pyg_nn.GATConv, pyg_nn.GATv2Conv)):
+                x = m(x, edge_index, edge_attr)
+            elif isinstance(m, nn.BatchNorm1d):
+                x = m(x)
+            if i != len(self.convs) - 1:
+                x = F.leaky_relu(x, 0.1)
+                x = F.dropout(x, p=0.5)
+        return F.leaky_relu(x, 0.1), edge_index
+
+class GATv2Block(nn.Module):
+    def __init__(self, dim_in, dim_h, dim_out, edge_dim, num_layers=2, heads=1):
+        super().__init__()
+        self.num_layers = num_layers
+        self.convs = nn.ModuleList()
+        self.convs.append(nn.BatchNorm1d(dim_in))
         self.convs.append(pyg_nn.GATv2Conv(dim_in, dim_h, heads, dropout=0.5, edge_dim=edge_dim))
         for _ in range(self.num_layers-2):
             self.convs.append(nn.BatchNorm1d(dim_h*heads))
@@ -19,7 +44,7 @@ class GATBlock(nn.Module):
     def forward(self, data):
         x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
         for i, m in enumerate(self.convs):
-            if isinstance(m, pyg_nn.GATv2Conv):
+            if isinstance(m, (pyg_nn.GATConv, pyg_nn.GATv2Conv)):
                 x = m(x, edge_index, edge_attr)
             elif isinstance(m, nn.BatchNorm1d):
                 x = m(x)
