@@ -41,8 +41,8 @@ class GATv2Block(nn.Module):
         self.convs.append(nn.BatchNorm1d(dim_h*heads))
         self.convs.append(pyg_nn.GATv2Conv(dim_h*heads, dim_out, heads, dropout=0.5, edge_dim=edge_dim))
         
-    def forward(self, data):
-        x, edge_index, edge_attr = data.x, data.edge_index, data.edge_attr
+    def forward(self, graph_data, x):
+        edge_index, edge_attr = graph_data.edge_index, graph_data.edge_attr
         for i, m in enumerate(self.convs):
             if isinstance(m, (pyg_nn.GATConv, pyg_nn.GATv2Conv)):
                 x = m(x, edge_index, edge_attr)
@@ -96,7 +96,7 @@ class SumPool(nn.Module):
         return x
     
     
-class ResLinear(nn.Module):
+class ResLinearBlock(nn.Module):
     def __init__(self, in_features):
         super().__init__()
         self.linear = nn.Linear(in_features, in_features)
@@ -108,7 +108,7 @@ class ResLinear(nn.Module):
         return x1
     
     
-class Linear(nn.Module):
+class LinearBlock(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
@@ -123,13 +123,13 @@ class Linear(nn.Module):
 class MetaDataEncoder(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
-        self.fc = nn.Linear(in_features, out_features)
-        self.res_fc = ResLinear(out_features)
+        self.fc1 = nn.Linear(in_features, out_features)
+        self.fc2 = LinearBlock(out_features, out_features)
         
     def forward(self, x):
-        x = self.fc(x)
+        x = self.fc1(x)
         x = F.leaky_relu(x, 0.1)
-        x = self.res_fc(x)
+        x = self.fc2(x)
         return x
     
 

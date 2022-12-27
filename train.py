@@ -14,7 +14,7 @@ num_eval_match = 10
 num_eval_data = 5000
 load_model = False
 model_dir = "weights"
-model_filename = "gat-2layer.pth"
+model_filename = "gatv2-2layer-last.pth"
 result_dir = "results"
 data_filename = "data_finalized.pickle"
 root = os.path.dirname(os.path.abspath(__file__))
@@ -37,19 +37,19 @@ def train(model, data, loss_fn, optimizer):
             optimizer.step()
             print(f"Training, progress: {i}/{len(data_copy)}", end="\r")
         except:
-            # print(f"Train Error at {i}/{len(data_copy)}")
+            print(f"Train Error at {i}/{len(data_copy)}")
             data.pop(i-num_error)
             num_error += 1
             continue
     return data
-    
+
 
 def eval(model, data):
     model.eval()
     num_pred = 0
     num_correct = 0
     with torch.no_grad():
-        for _ in range(num_eval_data):
+        for i in range(num_eval_data):
             try:
                 gamestate = random.choice(data)
                 graph_data, meta_data, label = gamestate.graph, gamestate.metadata, gamestate.label
